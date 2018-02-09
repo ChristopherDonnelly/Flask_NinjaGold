@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ninja Gold</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+        <script type=text/javascript>
+            $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+        </script>
+
+        <script>
+            function submitInfo($form){                
+                $.ajax({
+                    url: $SCRIPT_ROOT + '/process_money',
+                    data: JSON.stringify($form.serialize()),
+                    dataType: "json",
+                    contentType: 'application/json;charset=UTF-8',
+                    type: 'POST',
+                    success: function(response) {
+                        var message=response.message;
+                        var gold=response.gold;
+                        var $results_layer=$("#results_layer");
+
+                        var getAmount = message.split(" ")[1].replace(/[^\d-]/g,"");
+                        
+                        var myClass=(parseInt(getAmount)<0)?' class="negative"':'';
+                        
+                        $results_layer.append('<p'+myClass+'>'+message+'</p>').scrollTop($results_layer[0].scrollHeight);
+
+                        $('#gold').val(gold);
+                        if(gold<0) $('#gold').addClass('negative');
+                        else $('#gold').removeClass('negative');
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            }
+
+            $(document).ready(function(){
+                $("form").submit(function(e){
+                    submitInfo($(this));
+                    e.preventDefault();
+                });
+            });
+       </script>
+    </head>
+    <body>
+        <div id="wrapper">
+            <h1>Ninja Money</h1>
+            <p>Your Gold: <input type="text" name="gold" id="gold" value="{{session['gold']}}" readonly /></p>
+            <div id="nav">
+                <form action='/process_money' method='post'>
+                    <input type="hidden" name="building" value="farm" />
+                    <h3>Farm</h3>
+                    <p>Earn (10-20) gold helping out the farmer!</p>
+                    <input type="submit" value="Work!"/>
+                </form>
+                <form action='/process_money' method='post'>
+                    <input type="hidden" name="building" value="cave" />
+                    <h3>Cave</h3>
+                    <p>Earn (5-10) gold exploring the caverns!</p>
+                    <input type="submit" value="Explore!"/>
+                </form>
+                <form action='/process_money' method='post'>
+                    <input type="hidden" name="building" value="house" />
+                    <h3>House</h3>
+                    <p>Earn (10-20) gold crafting items!</p>
+                    <input type="submit" value="Craft!"/>
+                </form>
+                <form action='/process_money' method='post'>
+                    <input type="hidden" name="building" value="casino" />
+                    <h3>Casino</h3>
+                    <p>Earn or lose (1-50) gold gambling at the casino!</p>
+                    <input type="submit" value="Gamble!"/>
+                </form>
+                <label for="activity">
+                    <span>Activity:</span>
+                    <div id="results_layer">
+
+                    </div>
+                </label>
+            </div>
+        </div>
+    </body>
+</html>
